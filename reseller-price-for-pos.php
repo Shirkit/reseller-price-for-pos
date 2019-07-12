@@ -22,13 +22,13 @@ add_action( 'save_post', 'wc_cost_save_product' );
 function wc_cost_save_product( $product_id ) {
 
      // stop the quick edit interferring as this will stop it saving properly, when a user uses quick edit feature
-     if (wp_verify_nonce($_POST['_inline_edit'], 'inlineeditnonce'))
+     if (array_key_exists('_inline_edit', $_POST) && wp_verify_nonce($_POST['_inline_edit'], 'inlineeditnonce'))
         return;
 
     // If this is a auto save do nothing, we only save when update button is clicked
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )
 		return;
-	
+
 	remove_action( 'save_post', 'wc_cost_save_product' );
 	if ( isset( $_POST['reseller_price'] ) && $_POST['reseller_price'] ) {
 		if ( is_numeric( $_POST['reseller_price'] ) OR number_format ( $_POST['reseller_price'] , 2 , "," , "." ) ) {
@@ -150,7 +150,7 @@ add_action('delete_reseller_price', 'delete_reseller_coupon', 10, 1);
 
 function delete_reseller_coupon($product_id) {
 	$coupon_id = wc_get_coupon_id_by_code('autorevenda_' . $product_id);
-	
+
 	if (!($coupon_id == false || get_post_status($coupon_id) === false)) {
 		update_post_meta( $coupon_id, 'coupon_amount', 0 );
 	}
@@ -159,7 +159,7 @@ function delete_reseller_coupon($product_id) {
 function generate_reseller_coupon($product_id, $reseller_price) {
 	$coupon_id = wc_get_coupon_id_by_code('autorevenda_' . $product_id);
 	$product_price = get_post_meta($product_id, '_regular_price', true);
-	
+
 	if ($coupon_id == false || get_post_status($coupon_id) === false) {
 		$coupon = array(
 			'post_title' => 'autorevenda_' . $product_id,
@@ -170,7 +170,7 @@ function generate_reseller_coupon($product_id, $reseller_price) {
 		);
 		$coupon_id = wp_insert_post( $coupon );
 	}
-	
+
 	// Add meta
 	update_post_meta( $coupon_id, 'discount_type', 'fixed_product' );
 	update_post_meta( $coupon_id, 'coupon_amount', ($product_price + 0) - ($reseller_price + 0) );
